@@ -58,6 +58,8 @@ static void MX_TIM1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 
+uint16_t PPM_data[8];
+
 int main(void)
 {
 
@@ -75,16 +77,24 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
+  MX_USART1_UART_Init();
   MX_SPI1_Init();
   MX_TIM1_Init();
   MX_TIM3_Init();
-  MX_USART1_UART_Init();
 
+  HAL_TIM_Base_Start(&htim1);
 
-  while (1)
-  {
+  UART_TX("INIT");
+  while (1) {
 	  HAL_GPIO_TogglePin(LED_PIN_GPIO_Port, LED_PIN_Pin);
-	  HAL_Delay(100);
+	  HAL_Delay(10);
+	  uint8_t i;
+	  for(i = 0; i < 8; ++i) {
+		  static char buf[50];
+		  sprintf(buf, "%d ", PPM_data[i]);
+		  UART_TX(buf);
+	  }
+	  UART_TX("\r\n");
   }
 
 }
@@ -155,9 +165,9 @@ void MX_TIM1_Init(void)
   TIM_MasterConfigTypeDef sMasterConfig;
 
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 0;
+  htim1.Init.Prescaler = 48;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
-  htim1.Init.Period = 48;
+  htim1.Init.Period = 1000000;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
   htim1.Init.RepetitionCounter = 0;
   HAL_TIM_Base_Init(&htim1);
@@ -199,7 +209,7 @@ void MX_USART1_UART_Init(void)
 {
 
   huart1.Instance = USART1;
-  huart1.Init.BaudRate = 115200;
+  huart1.Init.BaudRate = 921600;
   huart1.Init.WordLength = UART_WORDLENGTH_8B;
   huart1.Init.StopBits = UART_STOPBITS_1;
   huart1.Init.Parity = UART_PARITY_NONE;

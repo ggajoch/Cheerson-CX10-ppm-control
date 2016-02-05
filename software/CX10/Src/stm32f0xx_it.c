@@ -80,8 +80,37 @@ void EXTI0_1_IRQHandler(void)
   HAL_GPIO_EXTI_IRQHandler(GPIO_PIN_0);
   /* USER CODE BEGIN EXTI0_1_IRQn 1 */
 
-  UART_TX("IRQ\r\n");
 
+  extern TIM_HandleTypeDef htim1;
+  volatile uint32_t length = htim1.Instance->CNT;
+  htim1.Instance->CNT = 0;
+
+  static uint8_t chan = 0;
+  static uint32_t pulse_start = 0;
+  if(length < 510 ) {  //must be a pulse if less than 510us
+	  pulse_start = length;
+  }
+  else if(length > 1910 ) {  //sync pulses over 1910us
+	  chan = 0;
+  }
+  else{  //servo values between 510us and 2420us will end up here
+	  if(chan < 8) {
+		  uint32_t pulse = (length + pulse_start);
+		  if( pulse > 2000 ) {
+			  pulse = 2000;
+		  } else if ( pulse < 1000 ) {
+			  pulse = 1000;
+		  }
+		  extern uint16_t PPM_data[8];
+		  PPM_data[chan] = pulse;
+	  }
+	  chan++;
+  }
+
+
+//  static char buf[50];
+//  sprintf(buf, "%ld\r\n", val);
+//  UART_TX(buf);
   /* USER CODE END EXTI0_1_IRQn 1 */
 }
 
