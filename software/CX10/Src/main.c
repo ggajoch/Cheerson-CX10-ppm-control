@@ -58,44 +58,48 @@ static void MX_TIM1_Init(void);
 static void MX_TIM3_Init(void);
 static void MX_USART1_UART_Init(void);
 
-uint16_t PPM_data[8];
+volatile uint16_t PPM_data[8];
 
 int main(void)
 {
 
-  /* USER CODE BEGIN 1 */
+	/* USER CODE BEGIN 1 */
 
-  /* USER CODE END 1 */
+	/* USER CODE END 1 */
 
-  /* MCU Configuration----------------------------------------------------------*/
+	/* MCU Configuration----------------------------------------------------------*/
 
-  /* Reset of all peripherals, Initializes the Flash interface and the Systick. */
-  HAL_Init();
+	/* Reset of all peripherals, Initializes the Flash interface and the Systick. */
+	HAL_Init();
 
-  /* Configure the system clock */
-  SystemClock_Config();
+	/* Configure the system clock */
+	SystemClock_Config();
 
-  /* Initialize all configured peripherals */
-  MX_GPIO_Init();
-  MX_USART1_UART_Init();
-  MX_SPI1_Init();
-  MX_TIM1_Init();
-  MX_TIM3_Init();
+	/* Initialize all configured peripherals */
+	MX_GPIO_Init();
+	MX_USART1_UART_Init();
+	MX_SPI1_Init();
+	MX_TIM1_Init();
+	MX_TIM3_Init();
 
-  HAL_TIM_Base_Start(&htim1);
+	HAL_TIM_Base_Start(&htim1);
 
-  UART_TX("INIT");
-  while (1) {
-	  HAL_GPIO_TogglePin(LED_PIN_GPIO_Port, LED_PIN_Pin);
-	  HAL_Delay(10);
-	  uint8_t i;
-	  for(i = 0; i < 8; ++i) {
-		  static char buf[50];
-		  sprintf(buf, "%d ", PPM_data[i]);
-		  UART_TX(buf);
-	  }
-	  UART_TX("\r\n");
-  }
+	static char buf[50];
+
+
+	NRF24L01_Reset();
+	NRF24L01_Initialize();
+	HAL_Delay(150);
+
+
+	CX10_init();
+	HAL_Delay(50);
+	CX10_bind();
+
+	while (1) {
+		process_CX10();
+		HAL_Delay(7);
+	}
 
 }
 
@@ -165,7 +169,7 @@ void MX_TIM1_Init(void)
   TIM_MasterConfigTypeDef sMasterConfig;
 
   htim1.Instance = TIM1;
-  htim1.Init.Prescaler = 48;
+  htim1.Init.Prescaler = 47;
   htim1.Init.CounterMode = TIM_COUNTERMODE_UP;
   htim1.Init.Period = 1000000;
   htim1.Init.ClockDivision = TIM_CLOCKDIVISION_DIV1;
@@ -201,7 +205,6 @@ void MX_TIM3_Init(void)
   sMasterConfig.MasterOutputTrigger = TIM_TRGO_RESET;
   sMasterConfig.MasterSlaveMode = TIM_MASTERSLAVEMODE_DISABLE;
   HAL_TIMEx_MasterConfigSynchronization(&htim3, &sMasterConfig);
-
 }
 
 /* USART1 init function */
@@ -240,7 +243,7 @@ void MX_GPIO_Init(void)
 
   /*Configure GPIO pin : PPM_PIN_Pin */
   GPIO_InitStruct.Pin = PPM_PIN_Pin;
-  GPIO_InitStruct.Mode = GPIO_MODE_IT_RISING_FALLING;
+  GPIO_InitStruct.Mode = GPIO_MODE_IT_FALLING;
   GPIO_InitStruct.Pull = GPIO_PULLDOWN;
   HAL_GPIO_Init(PPM_PIN_GPIO_Port, &GPIO_InitStruct);
 

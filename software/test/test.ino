@@ -425,17 +425,6 @@ void read_ppm()
 ///////////////
 // SPI
 
-void Read_Packet(uint8_t *data, uint8_t length)
-{
-    uint8_t i;
-    CS_off;
-    _spi_write(0x61); // Read RX payload
-    for (i=0;i<length;i++) {
-        data[i]=_spi_read();
-    }
-    CS_on;
-}
-
 uint8_t _spi_write(uint8_t command)
 {
     uint8_t result=0;
