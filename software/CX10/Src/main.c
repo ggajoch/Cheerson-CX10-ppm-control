@@ -98,7 +98,7 @@ int main(void)
 
 	while (1) {
 		process_CX10();
-		HAL_Delay(7);
+		HAL_Delay(6);
 	}
 
 }
